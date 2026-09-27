@@ -1,0 +1,54 @@
+{
+    "project": "Smart AI-Enabled Rapid Feed and Silage Quality Testing System",
+    "models": {
+        "FBSI": "FBSI_MobileNetV3_best.pth",
+        "Sensor": "Sensor_Risk_Best_Model.joblib",
+        "Padova": "Padova_Silage_Risk_Best_Model.joblib"
+    },
+    "fbsi_classes": [
+        "Score 0",
+        "Score 1",
+        "Score 1-2",
+        "Score 2",
+        "Score 3",
+        "Score 4"
+    ],
+    "sensor_features": [
+        "internaltemperature",
+        "externaltemperature",
+        "internalhumidity",
+        "percentagelevel",
+        "kglevel",
+        "delta_temp",
+        "temp_rate_C_per_hr",
+        "simulated_pH",
+        "simulated_moisture_pct",
+        "simulated_CO2_ppm"
+    ],
+    "padova_features": [
+        "dm.f",
+        "ash.f",
+        "cp.f",
+        "ee.f",
+        "ndf.f",
+        "adf.f",
+        "lignin.f",
+        "wsc.f",
+        "starch.f",
+        "method",
+        "inhoculant",
+        "dose",
+        "delay",
+        "fao.class",
+        "maturity",
+        "field"
+    ],
+    "padova_risk_definition": {
+        "LOW_RISK": "FQI below 33rd percentile",
+        "MEDIUM_RISK": "FQI between 33rd and 66th percentile",
+        "HIGH_RISK": "FQI above 66th percentile",
+        "threshold_33": 47.8193,
+        "threshold_66": 57.497
+    },
+    "note": "The three models provide complementary evidence and are combined at the decision layer rather than being trained as a single classifier."
+}

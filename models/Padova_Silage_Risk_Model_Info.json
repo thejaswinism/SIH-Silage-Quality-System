@@ -1,0 +1,95 @@
+{
+    "dataset": "datasilage.xlsx",
+    "sheet": "elab.all",
+    "target_value": "fqi",
+    "target_type": "FQI tertile risk category",
+    "risk_threshold_33": 47.81929806011471,
+    "risk_threshold_66": 57.49704290752612,
+    "numeric_features": [
+        "dm.f",
+        "ash.f",
+        "cp.f",
+        "ee.f",
+        "ndf.f",
+        "adf.f",
+        "lignin.f",
+        "wsc.f",
+        "starch.f"
+    ],
+    "categorical_features": [
+        "method",
+        "inhoculant",
+        "dose",
+        "delay",
+        "fao.class",
+        "maturity",
+        "field"
+    ],
+    "total_samples": 1486,
+    "training_samples": 1188,
+    "test_samples": 298,
+    "models_compared": [
+        "LogisticRegression",
+        "RandomForest",
+        "ExtraTrees",
+        "GradientBoosting"
+    ],
+    "top_models": [
+        "ExtraTrees",
+        "RandomForest",
+        "GradientBoosting"
+    ],
+    "selected_model": "RandomForest",
+    "cross_validation_results": {
+        "LogisticRegression": {
+            "accuracy_mean": 0.6229230932879481,
+            "accuracy_std": 0.040504798937097714,
+            "balanced_accuracy_mean": 0.622879746835443,
+            "balanced_accuracy_std": 0.04036185888282832,
+            "macro_f1_mean": 0.6226539023645039,
+            "macro_f1_std": 0.03866524682863539
+        },
+        "RandomForest": {
+            "accuracy_mean": 0.6776371308016877,
+            "accuracy_std": 0.02937579584377992,
+            "balanced_accuracy_mean": 0.6776898734177215,
+            "balanced_accuracy_std": 0.02905803202244363,
+            "macro_f1_mean": 0.6770414343224719,
+            "macro_f1_std": 0.029009170712308553
+        },
+        "ExtraTrees": {
+            "accuracy_mean": 0.681842357196043,
+            "accuracy_std": 0.015149808712455057,
+            "balanced_accuracy_mean": 0.6818881856540083,
+            "balanced_accuracy_std": 0.014965510742268652,
+            "macro_f1_mean": 0.6812006459421599,
+            "macro_f1_std": 0.015979124598767647
+        },
+        "GradientBoosting": {
+            "accuracy_mean": 0.6388752969542246,
+            "accuracy_std": 0.05132894941241992,
+            "balanced_accuracy_mean": 0.6388185654008438,
+            "balanced_accuracy_std": 0.05111341316657364,
+            "macro_f1_mean": 0.6359014828385776,
+            "macro_f1_std": 0.04995214956856928
+        }
+    },
+    "held_out_test_results": {
+        "ExtraTrees": {
+            "accuracy": 0.738255033557047,
+            "balanced_accuracy": 0.738013468013468,
+            "macro_f1": 0.7390110790410019
+        },
+        "RandomForest": {
+            "accuracy": 0.738255033557047,
+            "balanced_accuracy": 0.738013468013468,
+            "macro_f1": 0.7394510805599378
+        },
+        "GradientBoosting": {
+            "accuracy": 0.674496644295302,
+            "balanced_accuracy": 0.6741750841750842,
+            "macro_f1": 0.6745488654636412
+        }
+    },
+    "model_path": "/content/smart_silage_ai/models/Padova_Silage_Risk_Best_Model.joblib"
+}

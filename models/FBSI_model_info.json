@@ -1,0 +1,27 @@
+{
+    "model": "MobileNetV3-Small",
+    "dataset": "FBSI",
+    "num_images": 1511,
+    "num_training_images": 1208,
+    "num_validation_images": 303,
+    "num_classes": 6,
+    "classes": [
+        "Score 0",
+        "Score 1",
+        "Score 1-2",
+        "Score 2",
+        "Score 3",
+        "Score 4"
+    ],
+    "random_seed": 42,
+    "epochs": 15,
+    "best_epoch": 11,
+    "batch_size": 32,
+    "optimizer": "AdamW",
+    "learning_rate": 0.0001,
+    "accuracy": 0.900990099009901,
+    "balanced_accuracy": 0.8956209492881709,
+    "macro_f1": 0.8881593004545945,
+    "best_validation_macro_f1": 0.8881593004545945,
+    "model_path": "/content/smart_silage_ai/models/FBSI_MobileNetV3_best.pth"
+}

@@ -1,0 +1,40 @@
+{
+    "dataset": "Smart_Silage_Sensor_Simulation_Dataset.xlsx",
+    "sheet": "Sensor_Simulation",
+    "model": "ExtraTreesClassifier",
+    "features": [
+        "internaltemperature",
+        "externaltemperature",
+        "internalhumidity",
+        "percentagelevel",
+        "kglevel",
+        "delta_temp",
+        "temp_rate_C_per_hr",
+        "simulated_pH",
+        "simulated_moisture_pct",
+        "simulated_CO2_ppm"
+    ],
+    "target": "condition",
+    "total_samples": 240,
+    "training_samples": 192,
+    "test_samples": 48,
+    "classes": [
+        "EARLY_DETERIORATION_INDICATORS",
+        "HIGH_DETERIORATION_INDICATORS",
+        "LOW_APPARENT_RISK",
+        "NORMAL_SENSOR_BEHAVIOR",
+        "SENSOR_FAULT"
+    ],
+    "best_cv_macro_f1": 0.8732633857370699,
+    "test_accuracy": 0.9166666666666666,
+    "test_balanced_accuracy": 0.758288770053476,
+    "test_macro_f1": 0.7484848484848485,
+    "best_parameters": {
+        "model__n_estimators": 500,
+        "model__min_samples_split": 2,
+        "model__min_samples_leaf": 1,
+        "model__max_features": null,
+        "model__max_depth": null
+    },
+    "warning": "SENSOR_FAULT has only 3 total samples; performance for this class is therefore unstable."
+}
