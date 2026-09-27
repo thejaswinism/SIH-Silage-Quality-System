@@ -216,9 +216,7 @@ def load_padova_model():
         PADOVA_MODEL_PATH
     )
 
-
-padova_model = load_padova_model()
-
+padova_model = None
 
 def predict_padova(padova_input):
 
