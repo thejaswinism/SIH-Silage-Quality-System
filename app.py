@@ -22,7 +22,7 @@ st.set_page_config(
 # PATHS
 # ============================================================
 
-PROJECT = "/content/smart_silage_ai"
+PROJECT = os.path.dirname(os.path.abspath(__file__))
 
 FBSI_MODEL_PATH = os.path.join(
     PROJECT,
