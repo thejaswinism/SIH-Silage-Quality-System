@@ -140,9 +140,61 @@ SENSOR_FEATURES = [
 @st.cache_resource
 def load_sensor_model():
 
-    return joblib.load(
+    model = joblib.load(
         SENSOR_MODEL_PATH
     )
+
+    # Compatibility fix for models saved with an older
+    # scikit-learn version and loaded with a newer version.
+    try:
+        from sklearn.impute import SimpleImputer
+
+        visited = set()
+
+        def repair_imputers(obj):
+
+            if id(obj) in visited:
+                return
+
+            visited.add(id(obj))
+
+            if isinstance(obj, SimpleImputer):
+
+                if (
+                    not hasattr(obj, "_fill_dtype")
+                    and hasattr(obj, "statistics_")
+                ):
+                    obj._fill_dtype = obj.statistics_.dtype
+
+            if hasattr(obj, "get_params"):
+
+                try:
+                    params = obj.get_params(deep=False)
+
+                    for child in params.values():
+
+                        if child is not None:
+                            repair_imputers(child)
+
+                except Exception:
+                    pass
+
+            if isinstance(obj, (list, tuple)):
+
+                for child in obj:
+                    repair_imputers(child)
+
+            elif isinstance(obj, dict):
+
+                for child in obj.values():
+                    repair_imputers(child)
+
+        repair_imputers(model)
+
+    except Exception:
+        pass
+
+    return model
 
 
 sensor_model = load_sensor_model()
