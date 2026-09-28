@@ -792,7 +792,7 @@ if st.session_state.page == "home":
 
 
 # ============================================================
-# IMAGE PAGE — REAL FBSI AI
+# IMAGE PAGE — GAUCHARA AI SCREENING
 # ============================================================
 
 elif st.session_state.page == "image":
@@ -801,15 +801,16 @@ elif st.session_state.page == "image":
         navigate("home")
         st.rerun()
 
-    st.title("📸 Feed Image Analysis")
+    st.title("📸 Check Your Feed")
 
     st.write(
-        "Upload a feed or feed-bunk image for AI-based "
-        "visual screening."
+        "Upload a clear picture of your feed or feed bunk. "
+        "GauChara combines visual AI analysis with available "
+        "storage sensor evidence."
     )
 
     uploaded = st.file_uploader(
-        "Choose an image",
+        "📷 Upload / Take Photo",
         type=["jpg", "jpeg", "png"]
     )
 
@@ -819,63 +820,165 @@ elif st.session_state.page == "image":
 
         st.image(
             image,
-            caption="Selected sample",
+            caption="Selected feed sample",
             width=500
         )
 
         if st.button(
-            "🔍 ANALYZE IMAGE",
+            "🔍 ANALYZE WITH GAUCHARA",
             type="primary",
             use_container_width=True
         ):
 
             with st.spinner(
-                "Running FBSI MobileNetV3..."
+                "GauChara AI is analyzing your feed..."
             ):
 
+                # --------------------------------------------
+                # 1. FBSI IMAGE ANALYSIS
+                # --------------------------------------------
+
                 prediction, confidence = predict_fbsi(image)
+
+                # --------------------------------------------
+                # 2. SENSOR EVIDENCE
+                # --------------------------------------------
+                # Prototype sensor stream.
+                # Farmer does NOT enter these values.
+
+                sensor_input = {
+                    "internaltemperature": 25.0,
+                    "externaltemperature": 28.0,
+                    "internalhumidity": 60.0,
+                    "percentagelevel": 50.0,
+                    "kglevel": 100.0,
+                    "delta_temp": 0.0,
+                    "temp_rate_C_per_hr": 0.0,
+                    "simulated_pH": 4.0,
+                    "simulated_moisture_pct": 65.0,
+                    "simulated_CO2_ppm": 500.0
+                }
+
+                sensor_prediction, sensor_confidence = predict_sensor(
+                    sensor_input
+                )
+
+            # --------------------------------------------
+            # 3. COMBINED GAUCHARA RESULT
+            # --------------------------------------------
+
+            visual_high = prediction in ["Score 3", "Score 4"]
+
+            sensor_high = sensor_prediction in [
+                "HIGH_DETERIORATION_INDICATORS"
+            ]
+
+            sensor_early = sensor_prediction in [
+                "EARLY_DETERIORATION_INDICATORS"
+            ]
+
+            visual_low = prediction in [
+                "Score 0",
+                "Score 1",
+                "Score 1-2"
+            ]
+
+            sensor_low = sensor_prediction in [
+                "LOW_APPARENT_RISK",
+                "NORMAL_SENSOR_BEHAVIOR"
+            ]
+
+            high_votes = int(visual_high) + int(sensor_high)
+            low_votes = int(visual_low) + int(sensor_low)
+
+            if high_votes >= 2:
+                overall_risk = "HIGH"
+                risk_message = (
+                    "Potential feed or storage deterioration detected. "
+                    "Further inspection is recommended."
+                )
+
+            elif low_votes >= 2:
+                overall_risk = "LOW"
+                risk_message = (
+                    "No strong deterioration indicators were detected. "
+                    "Continue routine monitoring."
+                )
+
+            else:
+                overall_risk = "MEDIUM"
+                risk_message = (
+                    "The available evidence is mixed. "
+                    "Inspect the feed and continue monitoring."
+                )
+
+            combined_confidence = (
+                confidence + sensor_confidence
+            ) / 2
+
+            # --------------------------------------------
+            # 4. ONE RESULT CARD
+            # --------------------------------------------
 
             st.markdown(
                 '<div class="result-box">',
                 unsafe_allow_html=True
             )
 
-            st.success(
-                f"Visual Feed Bunk Score: {prediction}"
+            st.markdown(
+                "## 🌾 GauChara AI Assessment"
+            )
+
+            st.markdown(
+                f"### 📸 Visual Feed Score: **{prediction}**"
             )
 
             st.metric(
-                "AI Confidence",
+                "Visual AI Confidence",
                 f"{confidence * 100:.1f}%"
             )
 
-            if prediction in ["Score 3", "Score 4"]:
+            st.markdown(
+                f"### 🌡️ Storage Evidence: "
+                f"**{sensor_prediction.replace('_', ' ').title()}**"
+            )
 
-                st.warning(
-                    "Higher visual score detected. "
-                    "Further inspection is recommended."
+            st.metric(
+                "Combined AI Confidence",
+                f"{combined_confidence * 100:.1f}%"
+            )
+
+            st.markdown("---")
+
+            if overall_risk == "HIGH":
+
+                st.error(
+                    "🔴 OVERALL RISK: HIGH"
                 )
 
-            elif prediction in [
-                "Score 0",
-                "Score 1",
-                "Score 1-2"
-            ]:
+            elif overall_risk == "MEDIUM":
 
-                st.info(
-                    "Lower visual score detected. "
-                    "Continue routine monitoring."
+                st.warning(
+                    "🟡 OVERALL RISK: MEDIUM"
                 )
 
             else:
 
-                st.info(
-                    "Intermediate visual score detected. "
-                    "Additional evidence can be considered."
+                st.success(
+                    "🟢 OVERALL RISK: LOW"
                 )
 
+            st.markdown("### 💡 Farmer Advisory")
+
+            st.write(risk_message)
+
             st.caption(
-                "AI visual screening only — not a laboratory measurement."
+                "Evidence used: FBSI visual analysis + "
+                "available storage sensor evidence."
+            )
+
+            st.caption(
+                "Rapid screening only — not a laboratory measurement."
             )
 
             st.markdown(
