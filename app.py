@@ -531,120 +531,104 @@ def fuse_results(
 st.markdown("""
 <style>
 
-@import url(
-'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap'
-);
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'DM Sans', sans-serif;
+/* GauChara palette and global typography */
+html, body, [class*="css"], .stApp {
+    font-family: 'DM Sans', sans-serif !important;
 }
-
 .stApp {
-    background: #F3F0DD;
-    color: #173B1B;
+    background: #F3F0DD !important;
+    color: #173B1B !important;
 }
-
-#MainMenu {
-    visibility: hidden;
-}
-
-header {
-    visibility: hidden;
-}
-
-footer {
-    visibility: hidden;
-}
-
 .block-container {
     padding-top: 2rem;
     padding-left: 5%;
     padding-right: 5%;
     padding-bottom: 3rem;
 }
+#MainMenu, header, footer { visibility: hidden; }
 
-.brand {
-    font-size: 42px;
-    font-weight: 600;
-    color: #173B1B;
-    margin-bottom: 35px;
+/* Headings and standard text */
+.stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5,
+.stApp p, .stApp li, .stApp label,
+[data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] p,
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p,
+.stCaption {
+    color: #173B1B !important;
+}
+.stApp h1, .stApp h2, .stApp h3, .stApp h4 {
+    color: #174D25 !important;
+    font-weight: 700 !important;
 }
 
-.hero {
-    text-align: center;
-    margin-bottom: 45px;
-}
-
-.hero h1 {
-    font-size: 44px;
-    color: #173B1B;
-    margin-bottom: 8px;
-}
-
-.hero p {
-    font-size: 18px;
-    color: #526553;
-}
-
+/* Brand, hero and dashboard cards */
+.brand { font-size: 42px; font-weight: 700; color: #174D25 !important; margin-bottom: 35px; }
+.hero { text-align: center; margin-bottom: 45px; }
+.hero h1 { font-size: 44px; color: #174D25 !important; }
+.hero p { font-size: 18px; color: #526553 !important; }
 .card {
-    background: #E5E2CE;
-    border-radius: 22px;
-    padding: 30px 24px;
-    min-height: 350px;
-    margin-bottom: 25px;
-    text-align: center;
+    background: #E5E2CE !important; border-radius: 22px; padding: 30px 24px;
+    min-height: 350px; margin-bottom: 25px; text-align: center;
 }
-
-.card-title {
-    font-size: 27px;
-    font-weight: 600;
-    color: #173B1B;
-    margin-bottom: 22px;
-}
-
+.card-title { font-size: 27px; font-weight: 700; color: #174D25 !important; margin-bottom: 22px; }
 .card-image {
-    height: 210px;
-    border-radius: 20px;
-    border: 5px solid #175A25;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 75px;
-    background: #D9D7C3;
+    height: 210px; border-radius: 20px; border: 5px solid #175A25;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 75px; background: #D9D7C3 !important;
+}
+.card-description { margin-top: 14px; color: #526553 !important; font-size: 15px; }
+.result-box { background: #E5E2CE !important; border-radius: 20px; padding: 25px; margin-top: 20px; color: #173B1B !important; }
+.result-box * { color: #173B1B !important; }
+.footer { margin-top: 60px; padding-top: 35px; border-top: 1px solid #D5D1BA; color: #526553 !important; }
+
+/* Buttons */
+div.stButton > button, .stFormSubmitButton > button, .stDownloadButton > button {
+    border-radius: 10px !important; border: 1px solid #175A25 !important;
+    background: #175A25 !important; color: #FFFFFF !important; font-weight: 600 !important;
+}
+div.stButton > button *, .stFormSubmitButton > button *, .stDownloadButton > button * { color: #FFFFFF !important; }
+div.stButton > button:hover, .stFormSubmitButton > button:hover, .stDownloadButton > button:hover {
+    background: #26783A !important; border-color: #26783A !important;
 }
 
-.card-description {
-    margin-top: 14px;
-    color: #526553;
-    font-size: 15px;
+/* Inputs */
+.stTextInput input, .stNumberInput input, .stTextArea textarea,
+.stDateInput input, [data-baseweb="input"] input {
+    background: #FFFDF4 !important; color: #173B1B !important;
+    -webkit-text-fill-color: #173B1B !important;
+    border: 1px solid #9AA98D !important; border-radius: 8px !important;
 }
+.stTextInput input::placeholder, .stTextArea textarea::placeholder { color: #718071 !important; -webkit-text-fill-color: #718071 !important; }
+[data-baseweb="select"] > div { background: #FFFDF4 !important; border-color: #9AA98D !important; }
+[data-baseweb="select"] *, [role="option"] { color: #173B1B !important; }
+[data-baseweb="popover"] [role="listbox"] { background: #FFFDF4 !important; }
 
-div.stButton > button {
-    border-radius: 12px;
-    border: 1px solid #175A25;
-    color: #173B1B;
-    background: #F3F0DD;
-    font-weight: 600;
-}
+/* Metrics: dark readable values on light cards */
+[data-testid="stMetric"] { background: #E5E2CE !important; padding: 14px !important; border-radius: 12px !important; }
+[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] * { color: #526553 !important; }
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] * { color: #174D25 !important; }
 
-div.stButton > button:hover {
-    background: #DDE5D1;
-    border-color: #175A25;
-}
+/* Alerts and status messages */
+[data-testid="stAlert"] { border-radius: 12px !important; }
+[data-testid="stAlert"] p, [data-testid="stAlert"] span,
+[data-testid="stAlert"] div { color: #173B1B !important; }
+[data-testid="stAlert"] { background: #DCEAF0 !important; }
+[data-testid="stAlert"][kind="success"] { background: #D9EBD4 !important; }
+[data-testid="stAlert"][kind="warning"] { background: #FFF0BD !important; }
+[data-testid="stAlert"][kind="error"] { background: #F8D9D5 !important; }
 
-.result-box {
-    background: #E5E2CE;
-    border-radius: 20px;
-    padding: 25px;
-    margin-top: 20px;
-}
+/* Tables and dataframes */
+[data-testid="stDataFrame"], [data-testid="stTable"] { background: #FFFDF4 !important; border-radius: 10px !important; }
+[data-testid="stDataFrame"] *, [data-testid="stTable"] * { color: #173B1B !important; }
 
-.footer {
-    margin-top: 60px;
-    padding-top: 35px;
-    border-top: 1px solid #D5D1BA;
-    color: #526553;
-}
+/* Checkbox and radio labels */
+[data-testid="stCheckbox"] label, [data-testid="stCheckbox"] p,
+[data-testid="stRadio"] label, [data-testid="stRadio"] p { color: #173B1B !important; }
+
+/* Tabs */
+.stTabs [data-baseweb="tab"] { color: #173B1B !important; }
+.stTabs [aria-selected="true"] { color: #175A25 !important; }
 
 </style>
 """, unsafe_allow_html=True)
@@ -1050,7 +1034,7 @@ elif st.session_state.page == "image":
 
             if combined_confidence is not None:
                 st.metric(
-                    "Mean model confidence (not overall accuracy)",
+                    "Average confidence of available models (not combined accuracy)",
                     f"{combined_confidence * 100:.1f}%"
                 )
 
@@ -2120,7 +2104,10 @@ elif st.session_state.page == "settings":
         st.rerun()
     st.title("🌐 Language & Settings")
     language = st.selectbox("Select language", ["English", "Kannada", "Hindi", "Tamil", "Telugu", "Marathi"], key="selected_language")
-    st.info(f"Selected language: {language}. This selection is remembered during the current session; full translation of every screen is not yet implemented.")
+    if language == "English":
+        st.success("English interface selected.")
+    else:
+        st.warning(f"{language} is selected, but full interface translation is not implemented yet. The application currently remains in English.")
     st.checkbox("Enable in-app alerts", value=True, key="in_app_alerts")
     st.caption("In-app preferences only. Push notifications are not configured.")
 
