@@ -2034,6 +2034,56 @@ elif st.session_state.page == "feedback":
         count = conn.execute("SELECT COUNT(*) FROM feedback").fetchone()[0]
     st.caption(f"Feedback submissions on this app instance: {count}")
 
+    # --------------------------------------------------------
+    # PASSWORD-PROTECTED ADMIN FEEDBACK VIEW
+    # Configure GAUCHARA_ADMIN_PASSWORD in Streamlit Cloud:
+    # App -> Settings -> Secrets
+    # --------------------------------------------------------
+    st.divider()
+    with st.expander("🔐 Admin: View submitted feedback"):
+        try:
+            admin_password = st.secrets.get("GAUCHARA_ADMIN_PASSWORD", "")
+        except Exception:
+            admin_password = os.environ.get("GAUCHARA_ADMIN_PASSWORD", "")
+
+        if not admin_password:
+            st.warning(
+                "Admin viewing is not enabled yet. The app owner must add "
+                "GAUCHARA_ADMIN_PASSWORD in Streamlit Cloud → App settings → Secrets."
+            )
+        else:
+            entered_password = st.text_input(
+                "Admin password", type="password", key="feedback_admin_password"
+            )
+            if entered_password:
+                import hmac
+                if hmac.compare_digest(entered_password, str(admin_password)):
+                    with get_db() as conn:
+                        feedback_rows = conn.execute(
+                            "SELECT id, farmer, category, message, created_at "
+                            "FROM feedback ORDER BY id DESC"
+                        ).fetchall()
+
+                    st.subheader(f"Submitted feedback ({len(feedback_rows)})")
+                    if feedback_rows:
+                        import pandas as pd
+                        feedback_df = pd.DataFrame([dict(row) for row in feedback_rows])
+                        st.dataframe(
+                            feedback_df,
+                            use_container_width=True,
+                            hide_index=True
+                        )
+                        st.download_button(
+                            "Download feedback as CSV",
+                            data=feedback_df.to_csv(index=False).encode("utf-8-sig"),
+                            file_name="gau_chara_feedback.csv",
+                            mime="text/csv"
+                        )
+                    else:
+                        st.info("No feedback has been submitted yet.")
+                else:
+                    st.error("Incorrect admin password.")
+
 
 elif st.session_state.page == "cattle":
     if st.button("← Back to GauChara"):
