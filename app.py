@@ -24,6 +24,63 @@ st.set_page_config(
 
 PROJECT = os.path.dirname(os.path.abspath(__file__))
 
+# ============================================================
+# LOCAL DATABASE (NO SUPABASE REQUIRED)
+# ============================================================
+import sqlite3
+from datetime import datetime
+
+DB_PATH = os.path.join(PROJECT, "gau_chara_data.db")
+
+def get_db():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    with get_db() as conn:
+        conn.execute("""CREATE TABLE IF NOT EXISTS cattle (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tag TEXT UNIQUE NOT NULL,
+            name TEXT,
+            breed TEXT,
+            age_years REAL,
+            notes TEXT,
+            created_at TEXT
+        )""")
+        conn.execute("""CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            farmer TEXT,
+            category TEXT,
+            message TEXT NOT NULL,
+            created_at TEXT
+        )""")
+        conn.execute("""CREATE TABLE IF NOT EXISTS scans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scan_type TEXT,
+            visual_result TEXT,
+            sensor_result TEXT,
+            padova_result TEXT,
+            overall_risk TEXT,
+            advisory TEXT,
+            created_at TEXT
+        )""")
+
+def save_scan(scan_type, visual=None, sensor=None, padova=None,
+              risk=None, advisory=None):
+    with get_db() as conn:
+        conn.execute(
+            """INSERT INTO scans
+            (scan_type, visual_result, sensor_result, padova_result,
+             overall_risk, advisory, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (scan_type, visual, sensor, padova, risk, advisory,
+             datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        )
+
+init_db()
+
+
 FBSI_MODEL_PATH = os.path.join(
     PROJECT,
     "models",
@@ -201,23 +258,18 @@ sensor_model = load_sensor_model()
 
 
 def predict_sensor(sensor_input):
+    import pandas as pd
 
-    X = [[
-        sensor_input[f]
-        for f in SENSOR_FEATURES
-    ]]
-
+    X = pd.DataFrame(
+        [[sensor_input[f] for f in SENSOR_FEATURES]],
+        columns=SENSOR_FEATURES
+    )
     prediction = sensor_model.predict(X)[0]
-
     confidence = None
 
     if hasattr(sensor_model, "predict_proba"):
-
         probabilities = sensor_model.predict_proba(X)[0]
-
-        confidence = float(
-            max(probabilities)
-        )
+        confidence = float(max(probabilities))
 
     return prediction, confidence
 
@@ -271,26 +323,22 @@ def load_padova_model():
 padova_model = None
 
 def predict_padova(padova_input):
+    global padova_model
+    import pandas as pd
 
-    X = [[
-        padova_input[f]
-        for f in PADOVA_FEATURES
-    ]]
+    if padova_model is None:
+        padova_model = load_padova_model()
 
+    X = pd.DataFrame(
+        [[padova_input[f] for f in PADOVA_FEATURES]],
+        columns=PADOVA_FEATURES
+    )
     prediction = padova_model.predict(X)[0]
-
     confidence = None
 
-    if hasattr(
-        padova_model,
-        "predict_proba"
-    ):
-
+    if hasattr(padova_model, "predict_proba"):
         probabilities = padova_model.predict_proba(X)[0]
-
-        confidence = float(
-            max(probabilities)
-        )
+        confidence = float(max(probabilities))
 
     return prediction, confidence
 
@@ -964,9 +1012,14 @@ elif st.session_state.page == "image":
                     "Inspect the feed and continue monitoring."
                 )
 
+            confidence_values = [
+                value for value in [confidence, sensor_confidence]
+                if value is not None
+            ]
             combined_confidence = (
-                confidence + sensor_confidence
-            ) / 2
+                sum(confidence_values) / len(confidence_values)
+                if confidence_values else None
+            )
 
             # --------------------------------------------
             # 4. ONE RESULT CARD
@@ -995,10 +1048,11 @@ elif st.session_state.page == "image":
                 f"**{sensor_prediction.replace('_', ' ').title()}**"
             )
 
-            st.metric(
-                "Combined AI Confidence",
-                f"{combined_confidence * 100:.1f}%"
-            )
+            if combined_confidence is not None:
+                st.metric(
+                    "Mean model confidence (not overall accuracy)",
+                    f"{combined_confidence * 100:.1f}%"
+                )
 
             st.markdown("---")
 
@@ -1032,6 +1086,15 @@ elif st.session_state.page == "image":
             st.caption(
                 "Rapid screening only — not a laboratory measurement."
             )
+
+            save_scan(
+                "Photo screening (sensor inputs simulated)",
+                visual=prediction,
+                sensor=sensor_prediction,
+                risk=overall_risk,
+                advisory=risk_message
+            )
+            st.success("Screening record saved to local scan history.")
 
             st.markdown(
                 '</div>',
@@ -1218,6 +1281,18 @@ elif st.session_state.page == "sensors":
         st.caption(
             "Sensor screening is decision support and does "
             "not replace laboratory analysis."
+        )
+
+        save_scan(
+            "Manual sensor screening",
+            sensor=prediction,
+            risk=(
+                "HIGH" if prediction == "HIGH_DETERIORATION_INDICATORS"
+                else "MEDIUM" if prediction == "EARLY_DETERIORATION_INDICATORS"
+                else "LOW" if prediction in ["LOW_APPARENT_RISK", "NORMAL_SENSOR_BEHAVIOR"]
+                else "REVIEW"
+            ),
+            advisory="Sensor model screening result; verify readings and inspect the silo."
         )
 
         st.markdown(
@@ -1939,104 +2014,136 @@ elif st.session_state.page == "fusion":
                 "laboratory testing or professional assessment."
             )
 
+            save_scan(
+                "AI fusion",
+                visual=final_result["fbsi"],
+                sensor=final_result["sensor"],
+                padova=final_result["padova"],
+                risk=final_result["final_risk"],
+                advisory=final_result["advisory"]
+            )
+            st.success("Fusion result saved to local scan history.")
+
 
 # ============================================================
-# OTHER PAGES
+# FEEDBACK, CATTLE, HISTORY, SETTINGS AND STORY
 # ============================================================
 
 elif st.session_state.page == "feedback":
-
     if st.button("← Back to GauChara"):
         navigate("home")
         st.rerun()
-
-    st.title("💬 Feedback")
-
-    feedback = st.text_area(
-        "Farm observation / feedback"
-    )
-
-    if st.button("Submit Feedback"):
-
-        st.success(
-            "Thank you for your feedback!"
-        )
+    st.title("💬 Farmer Feedback")
+    farmer = st.text_input("Your name (optional)")
+    category = st.selectbox("Feedback category", ["App experience", "Feed quality observation", "Sensor issue", "Suggestion", "Other"])
+    message = st.text_area("Your feedback", height=140)
+    if st.button("Submit Feedback", type="primary"):
+        if not message.strip():
+            st.warning("Please enter feedback before submitting.")
+        else:
+            with get_db() as conn:
+                conn.execute("INSERT INTO feedback (farmer, category, message, created_at) VALUES (?, ?, ?, ?)",
+                    (farmer.strip(), category, message.strip(), datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            st.success("Thank you! Your feedback has been saved.")
+            st.rerun()
+    with get_db() as conn:
+        count = conn.execute("SELECT COUNT(*) FROM feedback").fetchone()[0]
+    st.caption(f"Feedback submissions on this app instance: {count}")
 
 
 elif st.session_state.page == "cattle":
-
     if st.button("← Back to GauChara"):
         navigate("home")
         st.rerun()
-
-    st.title("🐄 Cattle Data")
-
-    st.info(
-        "Cattle and feeding records can be added here."
-    )
+    st.title("🐄 Cattle Records")
+    with st.form("add_cattle_form", clear_on_submit=True):
+        tag = st.text_input("Cattle ID / Tag *")
+        name = st.text_input("Cattle name")
+        breed = st.text_input("Breed")
+        age = st.number_input("Age (years)", min_value=0.0, max_value=40.0, value=2.0, step=0.5)
+        notes = st.text_area("Feeding / health notes")
+        submitted = st.form_submit_button("Register Cattle")
+    if submitted:
+        if not tag.strip():
+            st.error("Cattle ID / Tag is required.")
+        else:
+            try:
+                with get_db() as conn:
+                    conn.execute("INSERT INTO cattle (tag, name, breed, age_years, notes, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                        (tag.strip(), name.strip(), breed.strip(), age, notes.strip(), datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                st.success("Cattle record added.")
+                st.rerun()
+            except sqlite3.IntegrityError:
+                st.error("That cattle ID already exists.")
+    st.subheader("Registered cattle")
+    with get_db() as conn:
+        cattle_rows = conn.execute("SELECT * FROM cattle ORDER BY id DESC").fetchall()
+    if cattle_rows:
+        import pandas as pd
+        st.dataframe([dict(row) for row in cattle_rows], use_container_width=True, hide_index=True)
+        choices = {f'{r["tag"]} — {r["name"] or "Unnamed"}': r["id"] for r in cattle_rows}
+        selected = st.selectbox("Select record to delete", list(choices.keys()))
+        if st.button("Delete selected cattle record"):
+            with get_db() as conn:
+                conn.execute("DELETE FROM cattle WHERE id = ?", (choices[selected],))
+            st.success("Record deleted.")
+            st.rerun()
+    else:
+        st.info("No cattle records added yet.")
 
 
 elif st.session_state.page == "history":
-
     if st.button("← Back to GauChara"):
         navigate("home")
         st.rerun()
-
-    st.title("📊 Scan History")
-
-    st.info(
-        "Previous screening records will appear here."
-    )
+    st.title("📊 Screening History")
+    with get_db() as conn:
+        rows = conn.execute("SELECT * FROM scans ORDER BY id DESC").fetchall()
+    if rows:
+        import pandas as pd
+        df = pd.DataFrame([dict(r) for r in rows])
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.download_button("Download scan history (CSV)", df.to_csv(index=False).encode("utf-8"),
+            "gau_chara_scan_history.csv", "text/csv")
+        if st.button("Clear all scan history"):
+            with get_db() as conn:
+                conn.execute("DELETE FROM scans")
+            st.success("History cleared.")
+            st.rerun()
+    else:
+        st.info("No screenings saved yet. Complete an analysis first.")
 
 
 elif st.session_state.page == "settings":
-
     if st.button("← Back to GauChara"):
         navigate("home")
         st.rerun()
-
     st.title("🌐 Language & Settings")
-
-    st.selectbox(
-        "Language",
-        [
-            "English",
-            "Kannada",
-            "Hindi",
-            "Tamil",
-            "Telugu",
-            "Marathi"
-        ]
-    )
-
-    st.checkbox(
-        "Enable notifications"
-    )
+    language = st.selectbox("Select language", ["English", "Kannada", "Hindi", "Tamil", "Telugu", "Marathi"], key="selected_language")
+    st.info(f"Selected language: {language}. This selection is remembered during the current session; full translation of every screen is not yet implemented.")
+    st.checkbox("Enable in-app alerts", value=True, key="in_app_alerts")
+    st.caption("In-app preferences only. Push notifications are not configured.")
 
 
 elif st.session_state.page == "story":
-
     if st.button("← Back to GauChara"):
         navigate("home")
         st.rerun()
-
     st.title("🌱 The GauChara Story")
-
-    st.write(
-        "GauChara is an AI-assisted feed and silage "
-        "screening prototype designed to support dairy "
-        "farmers with rapid quality and storage assessment."
-    )
-
+    st.subheader("Smarter feed, healthier herds.")
+    st.write("GauChara is an AI-assisted rapid feed and silage screening prototype designed to support dairy farmers in identifying visual and storage-related warning indicators.")
     st.markdown("""
-    **Core technologies**
+    **How it works**
+    1. FBSI computer vision classifies visible feed-bunk condition.
+    2. The sensor model evaluates supplied storage-condition measurements.
+    3. The Padova model classifies FQI-derived silage risk when its required inputs are available.
+    4. The fusion layer combines available classifications into a screening category and advisory.
 
-    - Computer Vision
-    - Machine Learning
-    - Sensor Analytics
-    - Silage Quality Analysis
-    - Evidence Fusion
-    - Farmer Advisory
+    **Important limitations**
+    - A photo does not directly measure pH, moisture, nutrients, toxins or adulterants.
+    - The photo workflow currently uses simulated sensor inputs, not live IoT readings.
+    - Padova risk categories are derived from FQI tertiles in its training dataset.
+    - GauChara is a screening aid, not a replacement for laboratory testing.
     """)
 
 
